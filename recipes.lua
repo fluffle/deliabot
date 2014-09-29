@@ -1,4 +1,4 @@
-local kNone = 'None'
+kNone = 'None'
 local function getName(input)
     if not input or input == kNone then
         return kNone
@@ -10,8 +10,8 @@ local function getName(input)
 end
     
 local function resolve(id, itemset, oredict)
-    if id:sub(1,1) == '@' and oredict:lookup(id) then
-        return oredict:lookup(id)
+    if id:sub(1,1) == '@' and oredict:items(id) then
+        return oredict:items(id)
     elseif id ~= kNone and itemset:item(id) then
         return {itemset:item(id)}
     elseif id == kNone then
@@ -150,34 +150,3 @@ end
 function Recipe:__tostring()
     return tostring(self.inputs)
 end        
-
-local function ignore(rcp)
-    -- special case: most Pam's vegetables have a recipe that looks like
-    -- (item) + (item) -> 2(item). Skip these because they are pointless.
-    if not rcp:shaped() and #rcp.inputs == 2
-        and rcp.inputs[1][1] == rcp.output
-        and rcp.inputs[2][1] == rcp.output
-    then
-        return true
-    end
-end
-
--- The recipe loader handles loading recipes from a file and turning the
--- itemset into a graph of recipe dependencies.
-function LoadRecipes(file, itemset, oredict)
-    local fh = io.open(file, 'r')
-    for line in fh:lines() do
-        local rcp = Recipe:fromline(line, itemset, oredict)
-        if rcp and not ignore(rcp) then
-            rcp.output:addrecipe(rcp)
-            for _, elem in rcp.inputs:items() do
-                if elem ~= kNone then
-                    for _, item in ipairs(elem) do
-                        item:setusedin(rcp.output)
-                    end
-                end
-            end 
-        end
-    end
-    fh.close()
-end

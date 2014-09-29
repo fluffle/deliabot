@@ -75,6 +75,24 @@ function ItemSet:fromfile(file)
     return is
 end
 
+function ItemSet:insert(item)
+    self[item.id] = item
+    return self
+end
+
+function ItemSet:remove(item)
+    assert(self[item.id], "Removing nonexistent item.")
+    self[item.id] = nil
+    return self
+end
+
+function ItemSet:mergefrom(is)
+    for id, item in pairs(is) do
+        self[id] = item
+    end
+    return self
+end
+
 function ItemSet:filter(filter)
     is = ItemSet:new()
     for id, item in pairs(self) do
@@ -83,6 +101,10 @@ function ItemSet:filter(filter)
         end
     end
     return is
+end
+
+function ItemSet:exists(item)
+    return self[item.id]
 end
 
 function ItemSet:item(id)

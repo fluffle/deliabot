@@ -16,10 +16,10 @@ oredict = OreDict:fromfile('oredict', allitems)
 -- Harvestcraft water/milk when crafting.
 oredict:replace('@listAllwater', allitems:item('15508:0'))
 oredict:replace('@listAllmilk', 
-    allitems:item('15507:0'),
-    allitems:item('15759:0'))
+    allitems:item('15507:0'), -- Fresh Milk
+    allitems:item('15759:0')) -- Soy Milk
 
-function oredictName(match)
+local function oredictName(match)
     return function (item)
         if not oredict:names(item) then return false end
         for _, name in ipairs(oredict:names(item)) do
@@ -29,10 +29,6 @@ function oredictName(match)
         end
     end
 end
-
--- All the Pam's HarvestCraft foods have a one-item oredict entry
--- whose name starts with '@food', so this makes them easy to find.
-fooditems = allitems:filter(oredictName('^@food'))
 toolitems = allitems:filter(oredictName('^@tool'))
 
 -- Load in all the recipes. First from the heap-derived data, then falling back
@@ -57,16 +53,20 @@ local function ignore(line)
             return true
         end
     end
-    -- Bags introduce nasty graph cycles, as does the sugar cube.
+    -- Bags introduce nasty graph cycles, as does the sugar cube and MFR meat
     badoutputs = {
         '12670:0', -- carrot bag
         '12669:0', -- potato bag
         '12675:0', -- bonemeal bag
         '12671:0', -- nether wart bag
         '4049:1',  -- sugar cube
+        '3133:12', -- raw meat block
+        '3133:13', -- cooked meat block
+        '12283:0', -- raw meat nugget
+        '12284:0', -- cooked meat nugget
     }
     for _, id in ipairs(badoutputs) do
-        if line:match('![^-]+->%('..id..',1%)') then
+        if line:match('![^-]+->%('..id..',%d%)') then
             return true
         end
     end
@@ -99,29 +99,51 @@ LoadRecipes('not_shapeless_ore_recipes', allitems, oredict)
 stopitems = ItemSet:new():mergefrom(toolitems)
 stopitems:insert(allitems:item('15508:0')) -- Fresh Water
 stopitems:insert(allitems:item('15507:0')) -- Fresh Milk
+stopitems:insert(allitems:item('334:0'))   -- Leather (Yoghurt->)
+stopitems:insert(allitems:item('280:0'))   -- Stick (Caramel Apple->)
+stopitems:insert(allitems:item('367:0'))   -- Rotten Flesh (Zombie Jerky->)
+stopitems:insert(allitems:item('296:0'))   -- Wheat (->Hay Bale)
+stopitems:insert(allitems:item('363:0'))   -- Raw Beef (->Cow Essence)
+stopitems:insert(allitems:item('352:0'))   -- Bone (->Skeleton Essence)
+stopitems:insert(allitems:item('375:0'))   -- Spider Eye (->Spider Essence)
+stopitems:insert(allitems:item('332:0'))   -- Snowball (->{Water,Air} Essence)
+stopitems:insert(allitems:item('351:1'))   -- Rose Red (->Dye Essence, Rose)
+stopitems:insert(allitems:item('351:11'))  -- Dandelion Yellow (->Flower, Goldenrod)
+stopitems:insert(allitems:item('351:2'))   -- Cactus Green (->Cactus etc)
 
-function recurse(item, indent)
-    print(string.rep(' ', indent) .. item.name)
-    if stopitems:item(item.id) then return end
-    for i, rcp in ipairs(item.recipes) do
-        for j, elem in rcp.inputs:items() do 
+for _, item in pairs(stopitems) do
+    item:clearrecipes()
+end
+
+deps = ItemSet:new()
+function recurse(item)
+    if not deps:exists(item) then
+        deps:insert(item)
+    end
+--    if stopitems:exists(item) then return end
+    for _, rcp in ipairs(item.recipes) do
+        for _, elem in rcp.inputs:items() do 
             if elem and elem ~= kNone then
-                for k, it in ipairs(elem) do
-                    recurse(it, indent + 2)
-                    if elem.name and k < #elem then
-                        -- oredict entry
-                        print(string.rep(' ', indent + 4) .. 'or...')
+                for _, it in ipairs(elem) do
+                    if not deps:exists(it) then
+                        recurse(it)
                     end
                 end
-                if j < #rcp.inputs then
-                    print(string.rep(' ', indent + 4) .. 'and...')
-                end
             end
-        end
-        if i < #item.recipes then
-            print(string.rep(' ', indent + 4) .. 'or...')
         end
     end
 end
 
-recurse(allitems:item('15554:0'), 0)
+-- All the Pam's HarvestCraft foods have a one-item oredict entry
+-- whose name starts with '@food', so this makes them easy to find.
+for _, item in pairs(allitems:filter(oredictName('^@food'))) do
+    recurse(item)
+end
+
+for _, v in pairs(deps) do
+    if not next(v.recipes) then
+        print(v.name)
+    end
+end
+
+

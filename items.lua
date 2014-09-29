@@ -35,6 +35,12 @@ function Item:addrecipe(rcp)
     table.insert(self.recipes, rcp)
 end
 
+function Item:clearrecipes()
+    -- NOTE: this does not clean up the other direction of the graph.
+    -- Maybe it should.
+    self.recipes = {}
+end
+
 function Item:__tostring()
     local strs = {string.format('%s (%s=%s)', self.name, self.class, self.id)}
     if next(self.usedin) then

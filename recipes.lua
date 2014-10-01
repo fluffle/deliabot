@@ -1,4 +1,3 @@
-kNone = 'None'
 local function getName(input)
     if not input or input == kNone then
         return kNone

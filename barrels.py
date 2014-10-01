@@ -100,7 +100,6 @@ class RingSet(object):
             self.axis, len(self) * self.orientation)]
         for r in self:
             s.append(' '.join(str(b['item']) for b in r))
-        s.append('')
         return '\n'.join(s)
 
     def validate(self, level):

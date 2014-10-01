@@ -4,6 +4,9 @@
 -- helpful, especially when shapeless recipe handling is broken:
 -- https://github.com/vitzli/recipedumper/issues/1
 
+-- None is used in many places.
+kNone = 'None'
+
 -- Load in the dumped list of items from a file.
 require 'items'
 allitems = ItemSet:fromfile('itemids')
@@ -96,6 +99,10 @@ end
 LoadRecipes('shapeless_ore_recipes', allitems, oredict)
 LoadRecipes('not_shapeless_ore_recipes', allitems, oredict)
 
+-- Load in the set of items we have available in our barrels.
+require 'barrels'
+barrels = RingSet:fromfile('barrels_testing', allitems)
+
 stopitems = ItemSet:new():mergefrom(toolitems)
 stopitems:insert(allitems:item('15508:0')) -- Fresh Water
 stopitems:insert(allitems:item('15507:0')) -- Fresh Milk
@@ -116,7 +123,7 @@ for _, item in pairs(stopitems) do
 end
 
 deps = ItemSet:new()
-function recurse(item)
+function foodDependencies(item)
     if not deps:exists(item) then
         deps:insert(item)
     end
@@ -126,7 +133,7 @@ function recurse(item)
             if elem and elem ~= kNone then
                 for _, it in ipairs(elem) do
                     if not deps:exists(it) then
-                        recurse(it)
+                        foodDependencies(it)
                     end
                 end
             end
@@ -137,13 +144,5 @@ end
 -- All the Pam's HarvestCraft foods have a one-item oredict entry
 -- whose name starts with '@food', so this makes them easy to find.
 for _, item in pairs(allitems:filter(oredictName('^@food'))) do
-    recurse(item)
+    foodDependencies(item)
 end
-
-for _, v in pairs(deps) do
-    if not next(v.recipes) then
-        print(v.name)
-    end
-end
-
-

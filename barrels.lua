@@ -40,6 +40,10 @@ function RingSet:fromfile(file, itemset)
     return rs
 end
 
+function RingSet:exists(item)
+    return self.items[item]
+end
+
 function RingSet:__tostring()
     strs = {}
     for index, r in ipairs(self.rings) do

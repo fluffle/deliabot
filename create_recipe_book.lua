@@ -123,11 +123,14 @@ for _, item in pairs(stopitems) do
 end
 
 deps = ItemSet:new()
-function foodDependencies(item)
+local function foodDependencies(item)
     if not deps:exists(item) then
         deps:insert(item)
+        if barrels:exists(item) then
+           item.barrel = barrels:exists(item) 
+        end
     end
---    if stopitems:exists(item) then return end
+    -- if stopitems:exists(item) then return end
     for _, rcp in ipairs(item.recipes) do
         for _, elem in rcp.inputs:items() do 
             if elem and elem ~= kNone then
@@ -145,4 +148,14 @@ end
 -- whose name starts with '@food', so this makes them easy to find.
 for _, item in pairs(allitems:filter(oredictName('^@food'))) do
     foodDependencies(item)
+end
+
+local function isMakeable(item)
+    return item:makeable()
+end
+
+makeable = deps:filter(isMakeable)
+
+for _, item in pairs(makeable) do
+    print(item.name .. ' is currently makeable')
 end

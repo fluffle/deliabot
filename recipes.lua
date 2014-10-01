@@ -116,6 +116,8 @@ end
 --     life is much easier when things are consistent.
 --   - output (Item): ID:DMG of the recipe output
 --   - outcount (int): number of items recipe produces
+--   - _makeable (bool): can this recipe be made (for makeable() caching)
+--   - pruned (Shaped|Shapeless): Object describing *makeable* recipe inputs.
 Recipe = {}
 
 function Recipe:new(typ)
@@ -146,6 +148,60 @@ function Recipe:shaped()
     return self.type:sub(1,6) == 'shaped'
 end
 
+function Recipe:makeable()
+    if self._makeable ~= nil then
+        -- We've done this lookup already. Yay caching.
+        return self._makeable
+    end
+    local pruned = Shapeless:new()
+    if self:shaped() then
+        pruned = Shaped:new()
+        pruned.width = self.inputs.width
+        pruned.height = self.inputs.height
+    end
+    self._makeable = true
+    for i, elem in self.inputs:items() do
+        -- We need one of the items in each elem to be either makeable
+        -- or in a barrel somewhere.
+        if elem and elem ~= kNone then
+            local makeable = {}
+            for _, item in ipairs(elem) do
+                if item:makeable() or item.barrel then
+--[[
+                    if item:makeable() then
+                        print(string.format('Item %s is makeable for %s.',
+                            item.name, self.output.name))
+                    end
+                    if item.barrel then
+                        print(string.format('Item %s is in barrel (%d,%d).',
+                            item.name, item.barrel[1], item.barrel[2]))
+                    end
+--]]
+                    table.insert(makeable, item)
+                end
+            end
+            if #makeable == 0 then
+                self._makeable = false
+--[[
+                if elem.name then
+                    print('No items makeable in ' .. elem.name)
+                else
+                    print('Item ' .. elem[1].name .. ' not makeable.')
+                end
+--]]
+                break
+            end
+            pruned[i] = makeable
+        end
+    end
+    if self._makeable then
+        self.pruned = pruned
+    end
+    return self._makeable
+end
+                    
+
 function Recipe:__tostring()
     return tostring(self.inputs)
-end        
+end
+

@@ -4,6 +4,9 @@
 --   - class (string): the class of the item e.g. "item.PamHarvestCraft:zucchinibakeItem"
 --   - usedin (table): LUT of ID:DMG->item where this item is a recipe ingredient
 --   - recipes (table): array of Recipes (see recipes.lua)
+--   - barrel (table): if this item exists in a barrel, {index, pos} of that barrel
+--   - _makeable (bool}: Whether this item is makeable (for makeable() caching)
+--   - pruned (table): array of makeable Recipes.
 Item = {}
 function Item:new(id, name, class)
     local item = {id=id, name=name, class=class, usedin={}, recipes={}}
@@ -39,6 +42,26 @@ function Item:clearrecipes()
     -- NOTE: this does not clean up the other direction of the graph.
     -- Maybe it should.
     self.recipes = {}
+end
+
+function Item:makeable()
+    if #self.recipes == 0 then return false end
+    if self._makeable ~= nil then
+        -- We've done this lookup already. Yay caching.
+        return self._makeable
+    end
+    self.pruned = {}
+    self._makeable = true
+    for i, rcp in ipairs(self.recipes) do
+        if rcp:makeable() then
+--            print(string.format('Recipe %d is makeable for %s.', i, self.name))
+            table.insert(self.pruned, rcp)
+        end
+    end
+    if #self.pruned == 0 then
+        self._makeable = false
+    end
+    return self._makeable
 end
 
 function Item:__tostring()

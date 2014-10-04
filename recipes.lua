@@ -24,16 +24,25 @@ function Inputs:serialize(s)
     for _, elem in ipairs(self) do
         if not elem or elem == kNone then
             s:write('%s,', kNone)
-        elseif elem.name then
-            -- oredict list
+        else
             s:write('{')
             for _, item in ipairs(elem) do
                 s:write('%q,', item.id)
             end
-            s:write('name = %q,', elem.name)
+            if elem.name then
+                s:write('name = %q,', elem.name)
+            end
             s:write('},')
-        else
-            s:write('{%q},', elem[1].id)
+        end
+    end
+end
+
+function Inputs:resolve(itemset)
+    for _, elem in ipairs(self) do
+        for i, id in ipairs(elem) do
+            if itemset:item(id) then
+                elem[i] = itemset:item(id)
+            end
         end
     end
 end
@@ -117,8 +126,8 @@ function Recipe:fromline(line, itemset, oredict)
     if not typ then return end
     local rcp = Recipe:new{type=typ}
     local _, _, output, outcount = line:find('->%((%d+:%d+),(%d+)%)')
-    if not output or not itemset[output] then return end
-    rcp.output = itemset[output]
+    if not output or not itemset:item(output) then return end
+    rcp.output = itemset:item(output)
     rcp.outcount = outcount
     if rcp:shaped() then
         rcp.inputs = Shaped:fromline(line, itemset, oredict)
@@ -185,7 +194,6 @@ function Recipe:makeable()
     return self._makeable
 end
                     
-
 function Recipe:serialize(s)
     -- We flatten the graph for serialization here by writing item IDs
     -- instead of serialized items for recipe inputs and outputs.
@@ -203,3 +211,11 @@ function Recipe:serialize(s)
     s:partial('}')
 end
 
+function Recipe:resolve(itemset)
+    -- This function does most of the work of unflattening the recipe graph
+    if type(self.output) ~= 'string' then return end
+    if not self.output or not itemset:item(self.output) then return end
+    self.output = itemset:item(self.output)
+    self.inputs:resolve(itemset)
+    if self.pruned then self.pruned:resolve(itemset) end
+end

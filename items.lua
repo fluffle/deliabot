@@ -76,6 +76,14 @@ function Item:serialize(s)
     s:partial('}')
 end
 
+function Item:resolve(itemset)
+    for _, t in ipairs({self.recipes, self.pruned}) do
+        if next(t) then
+            for _, rcp in ipairs(t) do rcp:resolve(itemset) end
+        end
+    end
+end
+
 -- An ItemSet maps ID:DMGs to Items.
 ItemSet = {}
 function ItemSet:new(is)
@@ -149,3 +157,10 @@ function ItemSet:serialize(s)
     end
     s:partial('}')
 end
+
+-- A serialized itemset is flat, this restores the links between
+-- recipe inputs and items.
+function ItemSet:resolve()
+    for _, item in pairs(self) do item:resolve(self) end
+end
+    

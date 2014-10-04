@@ -150,5 +150,6 @@ end
 makeable = deps:filter(isMakeable)
 require 'serializer'
 s = Serializer:new()
+s:partial('recipes = ')
 makeable:serialize(s)
-print('return ' .. tostring(s))
+print(s)

@@ -1,11 +1,17 @@
+os.loadAPI('lib/delia')
+if d then
+    print('Deliabot already initialised.')
+    print('If I am messed up, replace me on the fuel barrel')
+    print('and type "reboot" followed by "init".')
+    exit()
+end
+
 -- It appears that computercraft uses a version of lua < 5.2
 if unpack and not table.unpack then
     table.unpack = unpack
 end
 
-dofile('delia.lua')
-d = Delia:new(8)
+d = delia.Delia:new(8)
 if not d:refuel() then
     print('Couldn\'t get initial fuel from barrel {0,1}.')
-    print('Current fuel levels: ' .. turtle.getFuelLevel())
 end

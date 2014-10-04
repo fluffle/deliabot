@@ -194,6 +194,7 @@ function Delia:refuel()
     ok = ok and turtle.suckDown(8)
     ok = ok and turtle.refuel()
     ok = ok and turtle.select(1)
+    print('Current fuel level: ' .. turtle.getFuelLevel())
     return ok
 end
 

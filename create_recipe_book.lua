@@ -93,8 +93,32 @@ LoadRecipes('shapeless_ore_recipes', allitems, oredict)
 LoadRecipes('not_shapeless_ore_recipes', allitems, oredict)
 
 -- Load in the set of items we have available in our barrels.
-require 'barrels'
-barrels = RingSet:fromfile('barrels_testing', allitems)
+function LoadBarrels(file, itemset)
+    local turtle = {}
+    local fh = assert(io.open(file, 'r'))
+    local _, _, id, x, y, z, len =
+        fh:read():find('Turtle id=(%d+) x=([%d-]+) y=([%d-]+) z=([%d-]+) len=(%d+)')
+    assert(id, 'Could not load turtle/barrel data.')
+    index = 0
+    for line in fh:lines() do
+        index, pos = index + 1, 0
+        for id in line:gmatch('%S+') do
+            pos = pos + 1
+            if itemset:item(id) then
+                item = itemset:item(id)
+                item.index = index
+                item.pos = pos
+            end
+        end
+        assert(pos == 8, 'Not 8 items in ring line:\n\t' .. line)
+    end
+    fh.close()
+    assert(index == tonumber(len), 'Not '..len..' rings in file.')
+    turtle.x, turtle.y, turtle.z = tonumber(x), tonumber(y), tonumber(z)
+    turtle.len = tonumber(len)
+    return turtle
+end
+turtle = LoadBarrels('barrels_testing', allitems)
 
 stopitems = ItemSet:new():mergefrom(toolitems)
 stopitems:insert(allitems:item('15508:0')) -- Fresh Water
@@ -119,9 +143,6 @@ deps = ItemSet:new()
 local function foodDependencies(item)
     if not deps:exists(item) then
         deps:insert(item)
-        if barrels:exists(item) then
-           item.barrel = barrels:exists(item) 
-        end
     end
     -- if stopitems:exists(item) then return end
     for _, rcp in ipairs(item.recipes) do
@@ -153,3 +174,4 @@ s = Serializer:new()
 s:partial('recipes = ')
 makeable:serialize(s)
 print(s)
+print('len = ' .. turtle.len)

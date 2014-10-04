@@ -160,15 +160,15 @@ function Recipe:makeable()
         if elem and elem ~= kNone then
             local makeable = {}
             for _, item in ipairs(elem) do
-                if item:makeable() or item.barrel then
+                if item:makeable() or (item.index and item.pos) then
 --[[
                     if item:makeable() then
                         print(string.format('Item %s is makeable for %s.',
                             item.name, self.output.name))
                     end
-                    if item.barrel then
+                    if item.index and item.pos then
                         print(string.format('Item %s is in barrel (%d,%d).',
-                            item.name, item.barrel[1], item.barrel[2]))
+                            item.name, item.index, item.pos))
                     end
 --]]
                     table.insert(makeable, item)

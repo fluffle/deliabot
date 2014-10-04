@@ -77,15 +77,16 @@ local nav = {
 
 -- Delia provides apis for navigating ringsets 
 Delia = {}
-function Delia:new(len)
-    if not len then return end
+function Delia:new(is, len)
+    if not is then return end
     d = {
         _index = 0,   -- how far down the ringset we are
         _pos = 0,     -- what barrel position we are in for the ring
         _loc = 0,     -- what turtle location we are in (see below)
         _len = len,   -- the index of the ring furthest from the turtle
         tools = {},   -- which tools we have in which slots
-        slots = {},   
+        slots = {},
+        items = is,   -- the itemset representing currently makeable recipes
     }
     setmetatable(d, self)
     self.__index = self

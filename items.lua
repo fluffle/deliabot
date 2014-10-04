@@ -2,7 +2,8 @@
 --   - id (string): the ID:DMG of the item
 --   - name (string): descriptive name of item e.g. "Zucchini Bake"
 --   - class (string): the class of the item e.g. "item.PamHarvestCraft:zucchinibakeItem"
---   - barrel (table): if this item exists in a barrel, {index, pos} of that barrel
+--   - index (int): if this item exists in a barrel, index of that barrel
+--   - pos (int): if this item exists in a barrel, pos of that barrel
 --   - recipes (table): array of Recipes (see recipes.lua)
 --   - pruned (table): array of makeable Recipes.
 --   - _makeable (bool}: Whether this item is makeable (for makeable() caching)
@@ -60,8 +61,9 @@ function Item:serialize(s)
             s:write('%s = %q,', elem, self[elem])
         end
     end
-    if self.barrel then
-        s:write('barrel = {%d, %d},', self.barrel[1], self.barrel[2])
+    if self.index and self.pos then
+        s:write('index = %d,', self.index)
+        s:write('pos = %d,', self.pos)
     end
     for n, t in pairs({recipes = self.recipes, pruned = self.pruned}) do
         if next(t) then
@@ -162,5 +164,4 @@ end
 -- recipe inputs and items.
 function ItemSet:resolve()
     for _, item in pairs(self) do item:resolve(self) end
-end
-    
+end 

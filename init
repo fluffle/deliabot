@@ -1,4 +1,3 @@
-os.loadAPI('lib/delia')
 if d then
     print('Deliabot already initialised.')
     print('If I am messed up, replace me on the fuel barrel')
@@ -11,7 +10,23 @@ if unpack and not table.unpack then
     table.unpack = unpack
 end
 
-d = delia.Delia:new(8)
+-- loadAPI requires that stuff we want to load is global, then
+-- namespaces it for us. This is inconvenient for code that is
+-- used both inside and outside of computercraft.
+os.loadAPI('lib/items')
+Item = items.Item
+ItemSet = items.ItemSet
+
+os.loadAPI('lib/recipes')
+Shaped = recipes.Shaped
+Shapeless = recipes.Shapeless
+Recipe = recipes.Recipe
+
+os.loadAPI('lib/delia')
+os.loadAPI('lib/recipebook')
+
+d = delia.Delia:new(recipebook.recipes, recipebook.len)
 if not d:refuel() then
     print('Couldn\'t get initial fuel from barrel {0,1}.')
 end
+

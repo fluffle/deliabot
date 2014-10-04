@@ -95,9 +95,8 @@ class RingSet(object):
         # barrel at that particular position. The first line corresponds
         # to the ring closest to the turtle, the next to the next, etc.
         # The line is ordered as in the doc for ringFor() above.
-        s = ['Turtle %d %d %d %s%+d' % (
-            self.t[X], self.t[Y], self.t[Z],
-            self.axis, len(self) * self.orientation)]
+        s = ['Turtle id=%d x=%d y=%d z=%d len=%d' % (
+            self.t['id'], self.t[X], self.t[Y], self.t[Z], len(self))]
         for r in self:
             s.append(' '.join(str(b['item']) for b in r))
         return '\n'.join(s)
@@ -125,6 +124,7 @@ class RingSet(object):
                     X: t[X].value,
                     Y: t[Y].value,
                     Z: t[Z].value,
+                    'id': t['computerID'].value,
                     'turtle': t,
                 }
                 return True

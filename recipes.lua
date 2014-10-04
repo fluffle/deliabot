@@ -1,13 +1,3 @@
-local function getName(input)
-    if not input or input == kNone then
-        return kNone
-    elseif input.name then
-        return input.name
-    else
-        return input[1].name
-    end
-end
-    
 local function resolve(id, itemset, oredict)
     if id:sub(1,1) == '@' and oredict:items(id) then
         return oredict:items(id)
@@ -19,8 +9,8 @@ local function resolve(id, itemset, oredict)
 end
 
 Inputs = {}
-function Inputs:new()
-    local inputs = {}
+function Inputs:new(inputs)
+    inputs = inputs or {}
     setmetatable(inputs, self)
     self.__index = self
     return inputs
@@ -28,6 +18,24 @@ end
 
 function Inputs:items()
     return ipairs(self)
+end
+
+function Inputs:serialize(s)
+    for _, elem in ipairs(self) do
+        if not elem or elem == kNone then
+            s:write('%s,', kNone)
+        elseif elem.name then
+            -- oredict list
+            s:write('{')
+            for _, item in ipairs(elem) do
+                s:write('%q,', item.id)
+            end
+            s:write('name = %q,', elem.name)
+            s:write('},')
+        else
+            s:write('{%q},', elem[1].id)
+        end
+    end
 end
 
 Shaped = Inputs:new()
@@ -57,16 +65,12 @@ function Shaped:fromline(line, itemset, oredict)
     return inputs
 end
 
-function Shaped:__tostring()
-    local strs = {}
-    for h=1,self.height do
-        local line = {}
-        for w=1,self.width do
-            table.insert(line, getName(self[w+(3*(h-1))]))
-        end
-        table.insert(strs, '\t\t(' .. table.concat(line, ')\t\t(') .. ')')
-    end
-    return table.concat(strs, '\n')
+function Shaped:serialize(s)
+    s:write('Shaped:new {')
+    Inputs.serialize(self, s)
+    s:write('width = %d,', self.width)
+    s:write('height = %d,', self.height)
+    s:partial('}')
 end
 
 Shapeless = Inputs:new()
@@ -85,28 +89,10 @@ function Shapeless:fromline(line, itemset, oredict)
     return inputs
 end
 
-function Shapeless:__tostring()
-    local strs = {}
-    if #self > 6 then
-        -- fill vertically to match NEI
-        for h=1,3 do
-            local line = {}
-            for w=1,3 do
-                table.insert(line, getName(self[h+(3*(w-1))]))
-            end
-            table.insert(strs, '\t\t(' .. table.concat(line, ')\t\t(') .. ')')
-        end
-    else
-        for h=1,3 do
-            local line = {}
-            for w=1,2 do
-                table.insert(line, getName(self[w+(2*(h-1))]))
-            end
-            table.insert(line, kNone)
-            table.insert(strs, '\t\t(' .. table.concat(line, ')\t\t(') .. ')')
-        end
-    end
-    return table.concat(strs, '\n')
+function Shapeless:serialize(s)
+    s:write('Shapeless:new {')
+    Inputs.serialize(self, s)
+    s:partial('}')
 end
 
 -- A Recipe has the following fields:
@@ -119,9 +105,8 @@ end
 --   - _makeable (bool): can this recipe be made (for makeable() caching)
 --   - pruned (Shaped|Shapeless): Object describing *makeable* recipe inputs.
 Recipe = {}
-
-function Recipe:new(typ)
-    local rcp = {type=typ, inputs={}}
+function Recipe:new(rcp)
+    rcp = rcp or {}
     setmetatable(rcp, self)
     self.__index = self
     return rcp
@@ -130,7 +115,7 @@ end
 function Recipe:fromline(line, itemset, oredict)
     local _, _, typ = line:find('recipedumper:(%w+)!')
     if not typ then return end
-    local rcp = Recipe:new(typ)
+    local rcp = Recipe:new{type=typ}
     local _, _, output, outcount = line:find('->%((%d+:%d+),(%d+)%)')
     if not output or not itemset[output] then return end
     rcp.output = itemset[output]
@@ -201,7 +186,20 @@ function Recipe:makeable()
 end
                     
 
-function Recipe:__tostring()
-    return tostring(self.inputs)
+function Recipe:serialize(s)
+    -- We flatten the graph for serialization here by writing item IDs
+    -- instead of serialized items for recipe inputs and outputs.
+    s:write('Recipe:new {')
+    s:write('type = %q,', self.type)
+    s:write('output = %q,', self.output.id)
+    s:write('outcount = %d,', self.outcount)
+    for n, input in pairs({inputs = self.inputs, pruned = self.pruned}) do
+        if input then
+            s:partial('%s = ', n)
+            input:serialize(s)
+            s:write(',')
+        end
+    end
+    s:partial('}')
 end
 

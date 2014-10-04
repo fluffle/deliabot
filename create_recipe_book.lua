@@ -84,13 +84,6 @@ function LoadRecipes(file, itemset, oredict)
         local rcp = Recipe:fromline(line, itemset, oredict)
         if rcp then
             rcp.output:addrecipe(rcp)
-            for _, elem in rcp.inputs:items() do
-                if elem ~= kNone then
-                    for _, item in ipairs(elem) do
-                        item:setusedin(rcp.output)
-                    end
-                end
-            end 
         end
         ::continue::
     end
@@ -151,11 +144,11 @@ for _, item in pairs(allitems:filter(oredictName('^@food'))) do
 end
 
 local function isMakeable(item)
-    return item:makeable()
+    return item:makeable() or item.barrel
 end
 
 makeable = deps:filter(isMakeable)
-
-for _, item in pairs(makeable) do
-    print(item.name .. ' is currently makeable')
-end
+require 'serializer'
+s = Serializer:new()
+makeable:serialize(s)
+print('return ' .. tostring(s))

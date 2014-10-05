@@ -165,7 +165,7 @@ for _, item in pairs(allitems:filter(oredictName('^@food'))) do
 end
 
 local function isMakeable(item)
-    return item:makeable() or item.barrel
+    return item:makeable() or (item.index and item.pos)
 end
 
 makeable = deps:filter(isMakeable)

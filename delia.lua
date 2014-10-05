@@ -37,13 +37,13 @@ moves.ccw[2] = function ()
 end
 
 moves.cw[2] = function ()
-    ok = turtle.turnRight()
+    local ok = turtle.turnRight()
     ok = ok and turtle.turnRight()
     ok = ok and turtle.forward()
     if ok then return 4 end
 end
 moves.ccw[4] = function ()
-    ok = turtle.turnLeft()
+    local ok = turtle.turnLeft()
     ok = ok and turtle.turnLeft()
     ok = ok and turtle.forward()
     if ok then return 2 end
@@ -57,12 +57,12 @@ moves.ccw[3] = function ()
 end
 
 moves.cw[3] = function ()
-    ok = turtle.back()
+    local ok = turtle.back()
     ok = ok and turtle.turnLeft()
     if ok then return 0 end
 end
 moves.ccw[0] = function ()
-    ok = turtle.turnRight()
+    local ok = turtle.turnRight()
     ok = ok and turtle.forward()
     if ok then return 3 end
 end
@@ -74,6 +74,18 @@ local nav = {
     [4] = {[0]='cw',  [1]='ccw', [2]='ccw', [3]='cw' },
     [3] = {[0]='cw',  [1]='cw',  [2]='ccw', [4]='ccw'},
 }
+
+-- Turtles will only craft using the upper-left 3x3, ffs.
+local slots = {1,2,3,5,6,7,9,10,11}
+
+local function printf(fmt, ...)
+    print(string.format(fmt, ...))
+end
+
+DEBUG = true
+local function dprintf(fmt, ...)
+    if DEBUG then printf(fmt, ...) end
+end
 
 -- Delia provides apis for navigating ringsets 
 Delia = {}
@@ -87,14 +99,41 @@ function Delia:new(is, len)
         tools = {},   -- which tools we have in which slots
         slots = {},
         items = is,   -- the itemset representing currently makeable recipes
+        names = {},   -- a LUT of item name to items
     }
     setmetatable(d, self)
     self.__index = self
+    d:makeLUT()
     return d
 end
 
+function Delia:makeLUT()
+    for _, item in pairs(self.items) do
+        -- names are not unique, and case-sensitivity sucks.
+        local name = string.lower(item.name)
+        self.names[name] = self.names[name] or {}
+        table.insert(self.names[name], item)
+    end
+end
+
+function Delia:lookup(name)
+    local lname = string.lower(name)
+    if not self.names[lname] then return end
+    if #self.names[lname] == 1 then return self.names[lname][1] end
+    printf('Multiple items match %s, please choose:', name)
+    for i, item in ipairs(self.names[lname]) do
+        printf('%d: %s', i, item.id)
+    end
+    local i = tonumber(read())
+    while not i or not self.names[lname][i] do
+        print('Bad index, please try again.')
+        i = read()
+    end
+    return self.names[lname][i]
+end
+
 function Delia:reset()
-    -- for use when shit breaks
+    -- for use in the lua console when shit breaks
     self._index, self._pos, self._loc = 0, 0, 0
 end
 
@@ -102,7 +141,7 @@ function Delia:move(index, pos)
     if not pos and specialLocs[index] then
         index, pos = table.unpack(specialLocs[index])
     end
-    ok = self:index(index)
+    local ok = self:index(index)
     return ok and self:pos(pos)
 end
 
@@ -116,14 +155,15 @@ function Delia:index(index)
         count, move, dir = -count, turtle.back, -1
     end
     
-    ok = true
+    local ok = true
     for i=1,count do
-        print(string.format('Moving from index %d -> %d.',
-            self._index, self._index + dir))
+--        dprintf('Moving from index %d -> %d.',
+--            self._index, self._index + dir)
         ok = ok and move()
         if not ok then
-            print(string.format('Moving from index %d -> %d failed.',
-                self._index, self._index + dir))
+            printf('Moving from index %d -> %d failed.',
+                self._index, self._index + dir)
+            self:move('home')
             break
         end
         self._index = self._index + dir
@@ -135,16 +175,16 @@ function Delia:loc(loc)
     if loc > 4 or loc < 0 then return false end
     if self._loc == loc then return true end
 
-    ok = true
+    local ok = true
     while self._loc ~= loc do
-        print(string.format('Moving from loc %d -> %d.',
-            self._loc, loc))
+--        dprintf('Moving from loc %d -> %d.', self._loc, loc)
         -- assert here because we really *ought* to have a direction.
-        dir = assert(nav[self._loc][loc],
+        local dir = assert(nav[self._loc][loc],
             string.format('No nav for loc %d -> %d.', self._loc, loc))
-        new = moves[dir][self._loc]()
+        local new = moves[dir][self._loc]()
         if not new then
-            print(string.format('Moving from loc %d -> %d failed.', self._loc, loc))
+            printf('Moving from loc %d -> %d failed.', self._loc, loc)
+            self:move('home')
             break
         end
         self._loc = new
@@ -170,7 +210,15 @@ function Delia:pick(n)
         pick = turtle.suckUp
     end
     if n then
-        return pick(n)
+        if not pick(n) then return false end
+        local got = turtle.getItemCount()
+        if got ~= n then
+            printf('Picked %d at (%d, %d), wanted %d.',
+                got, self._index, self._pos, n)
+            self:put(got)
+            return false
+        end
+        return true
     end
     return pick()
 end
@@ -184,26 +232,186 @@ function Delia:put(n)
         put = turtle.dropUp
     end
     if n then
+        local got = turtle.getItemCount()
+        if got ~= n then
+            printf('Trying to put %d at (%d, %d), have %d.',
+                n, self._index, self._pos, got)
+        end
         return put(n)
     end
     return put()
 end
 
 function Delia:refuel()
-    ok = self:move('home')
-    ok = ok and turtle.select(16)
+    local ok = self:move('home')
+    turtle.select(16)
     ok = ok and turtle.suckDown(8)
     ok = ok and turtle.refuel()
-    ok = ok and turtle.select(1)
-    print('Current fuel level: ' .. turtle.getFuelLevel())
+    turtle.select(1)
+    printf('Current fuel level: %d', turtle.getFuelLevel())
     return ok
 end
 
-function Delia:fetch(index, pos)
-    ok = self:move(index, pos)
-    ok = ok and self:pick()
+function Delia:get(index, pos, n)
+    local ok = self:move(index, pos)
+    ok = ok and self:pick(n)
     ok = ok and self:move('out')
     ok = ok and self:put()
     ok = ok and self:move('home')
     return ok
+end
+
+function Delia:fetch(name, n)
+    local item = self:lookup(name)
+    if item and item.index and item.pos then
+        if not self:get(item.index, item.pos, n) then
+            printf('Failed to get %s', item.name)
+            self:move('home')
+        end
+    else
+        printf('No barrel for %s', name)
+    end
+end
+
+function Delia:craft(out, n)
+    -- We have to call turtle.craft() in a loop when using harvestcraft
+    -- tools, because it will only craft one output at a time :-(
+    self:move(out)
+    turtle.select(16)
+    for i=1,n do
+        if not turtle.craft() then
+            return false
+        end
+        self:put()
+    end
+    turtle.select(1)
+    return true
+end
+
+function Delia:empty(errstr, ...)
+    if errstr then
+        printf(errstr, ...)
+        print('Please empty chest and reset me :-(')
+    end
+    self:move('out')
+    for i=1,16 do
+        if turtle.getItemCount(i) > 0 then
+            turtle.select(i)
+            self:put()
+        end
+    end
+    turtle.select(1)
+    self:move('home')
+end
+
+function Delia:make(name, n)
+    local item = self:lookup(name)
+    n = n or 1
+    if not item then
+        printf('Unknown or unmakeable item: %s', name)
+        return
+    elseif #item.pruned == 0 then
+        printf('No recipes for %s', name)
+        return
+    end
+    self:makeinternal(item, n)
+end
+
+function Delia:makeinternal(item, n)
+    dprintf('Making %d of %s (%s)', n, item.name, item.id)
+    local items = self:checkRecipes(item, n)
+    if items and next(items) then
+        self:makesimple(items, n)
+    else
+        self:makedeps(item, n)
+    end
+end
+
+function Delia:makesimple(items, n)
+    -- all of these items are known to be in barrels
+    local tools = {}
+    local ok = true
+    for i, item in pairs(items) do
+        slot = slots[i]
+        dprintf('Picking %s to slot %d.', item.name, slot)
+        turtle.select(slot)
+        ok = ok and self:move(item.index, item.pos)
+        if item.istool then
+            tools[slot] = item
+            ok = ok and self:pick()
+        else
+            ok = ok and self:pick(n)
+        end
+        if not ok then
+            self:empty('Simple make failed at item %s.', item.name)
+            return
+        end
+    end
+    if not self:craft('out', n) then
+        self:empty('Simple make failed while crafting.')
+        return
+    end
+    for i, item in pairs(tools) do
+        dprintf('Returning %s from slot %d.', item.name, i)
+        turtle.select(i)
+        ok = ok and self:move(item.index, item.pos)
+        ok = ok and self:put()
+        if not ok then
+            self:empty('Simple make failed while returning %s.', item.name)
+            return
+        end
+    end
+    self:empty()
+end
+
+function Delia:makedeps(item, n)
+    print('Not ready yet.')
+end
+
+function Delia:checkRecipes(item, n)
+    for _, rcp in ipairs(item.pruned) do
+        local items = self:checkIngredients(rcp, n)
+        if items then return items end
+    end
+end
+    
+function Delia:checkIngredients(recipe, n)
+    local items = {}
+    for _, elem in recipe.pruned:items() do
+        if elem and elem ~= kNone then
+            local foundelem = false
+            for _, item in ipairs(elem) do
+                local want = n
+                if item.istool then
+                    want = 1
+                end
+                if self:checkInBarrel(item, want) then
+                    table.insert(items, item)
+                    foundelem = true
+                    dprintf('We have %d of %s.', want, item.name)
+                    break
+                end
+            end
+            if not foundelem then
+                -- bail out early since we need to do a full dep scan
+                print('Failed to find any of these items:')
+                for _, item in ipairs(elem) do
+                    print(item.name)
+                end
+                return
+            end
+        end
+    end
+    return items
+end
+
+function Delia:checkInBarrel(item, n)
+    if not (item.index and item.pos) then return false end
+    if not self:move(item.index, item.pos) then return false end
+    if self:pick(n) then
+        self:put(n)
+        return true
+    else
+        return false
+    end
 end

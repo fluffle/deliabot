@@ -7,6 +7,7 @@
 --   - recipes (table): array of Recipes (see recipes.lua)
 --   - pruned (table): array of makeable Recipes.
 --   - _makeable (bool}: Whether this item is makeable (for makeable() caching)
+--   - istool (bool): Whether this item is a harvestcraft tool.
 Item = {}
 function Item:new(item)
     item = item or {}
@@ -65,6 +66,7 @@ function Item:serialize(s)
         s:write('index = %d,', self.index)
         s:write('pos = %d,', self.pos)
     end
+    if self.istool then s:write('istool = true,') end
     for n, t in pairs({recipes = self.recipes, pruned = self.pruned}) do
         if next(t) then
             s:write('%s = {', n)

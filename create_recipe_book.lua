@@ -33,6 +33,9 @@ local function oredictName(match)
     end
 end
 toolitems = allitems:filter(oredictName('^@tool'))
+for _, item in pairs(toolitems) do
+    item.istool = true
+end
 
 -- Load in all the recipes. First from the heap-derived data, then falling back
 -- to the dumped data for all non-shapelessore recipes. Note: shapedore recipes
@@ -171,7 +174,8 @@ end
 makeable = deps:filter(isMakeable)
 require 'serializer'
 s = Serializer:new()
-s:partial('recipes = ')
+s:partial('items = ')
 makeable:serialize(s)
 print(s)
 print('len = ' .. turtle.len)
+

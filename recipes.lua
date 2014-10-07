@@ -201,12 +201,15 @@ function Recipe:serialize(s)
     s:write('type = %q,', self.type)
     s:write('output = %q,', self.output.id)
     s:write('outcount = %d,', self.outcount)
-    for n, input in pairs({inputs = self.inputs, pruned = self.pruned}) do
-        if input then
-            s:partial('%s = ', n)
-            input:serialize(s)
-            s:write(',')
-        end
+    if self.inputs then
+        s:partial('inputs = ')
+        self.inputs:serialize(s)
+        s:write(',')
+    end
+    if self.pruned then
+        s:partial('pruned = ')
+        self.pruned:serialize(s)
+        s:write(',')
     end
     s:partial('}')
 end

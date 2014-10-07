@@ -154,9 +154,19 @@ end
 
 function ItemSet:serialize(s)
     s:write('ItemSet:new {')
-    for id, item in pairs(self) do
+    local ids = {}
+    for id, _ in pairs(self) do
+        table.insert(ids, id)
+    end
+    table.sort(ids, function(a,b)
+        local _, _, aid, admg = a:find('(%d+):(%d+)')
+        local _, _, bid, bdmg = b:find('(%d+):(%d+)')
+        aid, admg, bid, bdmg = tonumber(aid), tonumber(admg), tonumber(bid), tonumber(bdmg)
+        return aid < bid or aid == bid and admg < bdmg
+    end)
+    for _, id in ipairs(ids) do
         s:partial('[%q] = ', id)
-        item:serialize(s)
+        self[id]:serialize(s)
         s:write(',')
     end
     s:partial('}')

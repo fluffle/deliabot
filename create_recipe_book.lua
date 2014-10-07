@@ -61,6 +61,7 @@ local function ignore(line)
     end
     -- Bags introduce nasty graph cycles, as does the sugar cube and MFR meat
     badoutputs = {
+        '12667:0', -- wheat seed bag
         '12670:0', -- carrot bag
         '12669:0', -- potato bag
         '12675:0', -- bonemeal bag

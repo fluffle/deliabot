@@ -31,12 +31,24 @@ function MakeState:new(delia, item)
 end
 
 function MakeState:printqueue()
-    for i, elem in ipairs(self.queue) do
+    for i=#self.queue,1,-1 do
+        local elem = self.queue[i]
         if #elem == 1 then
-            printf('%d: %s', i, elem[1].name)
+            printf('%d: %s', #self.queue - i + 1, elem[1].name)
         else
-            printf('%d: [%s]', i, elemstr(elem))
+            printf('%d: [%s]', #self.queue - i + 1, elemstr(elem))
         end
+    end
+end
+
+function MakeState:printbarrels()
+    for i, elem in ipairs(self.barrels) do
+        local strs = {}
+        for _, item in ipairs(elem) do
+            table.insert(strs, string.format('%s (%d, %d)',
+                item.name, item.index, item.pos))
+        end
+        printf('%d: %s', i, table.concat(strs, ', '))
     end
 end
 
@@ -90,21 +102,28 @@ function MakeState:phase1()
     
     -- We do this at the element level because the list of items in 
     -- elem are a logical OR for the recipe, we only need to make one.
+    -- TODO: Recipes themselves are logical ORs too.
     local efunc = function(elem, env)
         local found = 0
+        local barrels = {}
         for _, item in ipairs(elem) do
             if env.seen[item] then
                 found = found + 1
             elseif item.index and item.pos then
                 found = found + 1
-                table.insert(env.barrels, item)
+                table.insert(barrels, item)
                 dprintf('Barrel found for %s at (%d, %d).',
                     item.name, item.index, item.pos)
             end
             env.seen[item] = true
         end
-        if found < #elem then
-            table.insert(env.queue, 1, elem)
+        if #barrels > 0 then
+            table.sort(barrels, function(a, b)
+                return a.index < b.index or a.index == b.index and a.pos < b.pos
+            end)
+            table.insert(env.barrels, barrels)
+        elseif #barrels == 0 and found == 0 then
+            table.insert(env.queue, elem)
             dprintf('Queue insert: [%s]', elemstr(elem))
         end
         return found > 0
@@ -118,7 +137,7 @@ function MakeState:phase1()
     }
     self:bfwalk(self.output, env)
     table.sort(self.barrels, function (a,b)
-        return a.index < b.index or a.index == b.index and a.pos < b.pos
+        return a[1].index < b[1].index or a[1].index == b[1].index and a[1].pos < b[1].pos
     end)
 end
 
@@ -131,6 +150,8 @@ items:resolve()
 for _, item in pairs(items) do
     local ms = MakeState:new(nil, item)
     ms:phase1()
+    printf('Barrels for %s:', item.name)
+    ms:printbarrels()
     printf('Queue for %s:', item.name)
     ms:printqueue()
 end

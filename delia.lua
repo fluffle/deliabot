@@ -1,3 +1,5 @@
+local kNone = 'None'
+
 local specialLocs = {
     home = {0, 0}, -- home spot, fuel below.
     out  = {0, 2}, -- output chest to the right of turtle
@@ -77,15 +79,6 @@ local nav = {
 
 -- Turtles will only craft using the upper-left 3x3, ffs.
 local slots = {1,2,3,5,6,7,9,10,11}
-
-local function printf(fmt, ...)
-    print(string.format(fmt, ...))
-end
-
-DEBUG = true
-local function dprintf(fmt, ...)
-    if DEBUG then printf(fmt, ...) end
-end
 
 -- Delia provides apis for navigating ringsets 
 Delia = {}
@@ -319,12 +312,15 @@ end
 
 function Delia:makeinternal(item, n)
     dprintf('Making %d of %s (%s)', n, item.name, item.id)
-    local items = self:checkRecipes(item, n)
-    if items and next(items) then
-        self:makesimple(items, n)
-    else
-        self:makedeps(item, n)
+    local items, missing
+    for _, rcp in ipairs(item.pruned) do
+        items, missing = self:checkIngredients(rcp, n)
+        if items and not missing then
+            self:makesimple(items, n)
+            return true
+        end
     end
+    self:makedeps(item, n)
 end
 
 function Delia:makesimple(items, n)
@@ -368,16 +364,9 @@ function Delia:makedeps(item, n)
     print('Not ready yet.')
 end
 
-function Delia:checkRecipes(item, n)
-    for _, rcp in ipairs(item.pruned) do
-        local items = self:checkIngredients(rcp, n)
-        if items then return items end
-    end
-end
-    
 function Delia:checkIngredients(recipe, n)
-    local items = {}
-    for _, elem in recipe.pruned:items() do
+    local items, missing = {}, {}
+    for i, elem in recipe.pruned:items() do
         if elem and elem ~= kNone then
             local foundelem = false
             for _, item in ipairs(elem) do
@@ -385,33 +374,28 @@ function Delia:checkIngredients(recipe, n)
                 if item.istool then
                     want = 1
                 end
-                if self:checkInBarrel(item, want) then
-                    table.insert(items, item)
+                local got = self:checkInBarrel(item)
+                if got and got > want then
+                    items[i] = item
                     foundelem = true
                     dprintf('We have %d of %s.', want, item.name)
                     break
                 end
             end
             if not foundelem then
-                -- bail out early since we need to do a full dep scan
-                print('Failed to find any of these items:')
-                for _, item in ipairs(elem) do
-                    print(item.name)
-                end
-                return
+                missing[i] = elem
             end
         end
     end
-    return items
+    return items, missing
 end
 
-function Delia:checkInBarrel(item, n)
-    if not (item.index and item.pos) then return false end
-    if not self:move(item.index, item.pos) then return false end
-    if self:pick(n) then
-        self:put(n)
-        return true
-    else
-        return false
+function Delia:checkInBarrel(item)
+    if not (item.index and item.pos) then return end
+    if not self:move(item.index, item.pos) then return end
+    if self:pick() then
+        local num = turtle.getItemCount()
+        self:put()
+        return num
     end
 end

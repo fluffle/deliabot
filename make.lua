@@ -17,18 +17,28 @@ end
 
 -- MakeState tracks the making of an item and its dependencies.
 MakeState = {}
-function MakeState:new(delia, item)
+function MakeState:new(delia, item, count)
     ms = {
         delia=delia,
-        output=item,
+        output=item,  -- what to make
+        count=count,  -- how many to make
         pipe={},      -- keep track of items in temp chest (FIFO, meh)
-        barrels={},   -- 
+        barrels={},   -- sorted list of barrels to check contents of
+        items={},     -- map of barrel item -> {multiplier, count}
         queue={},     -- make queue, created bf from dep tree
     }
     setmetatable(ms, self)
     self.__index = self
     return ms
 end
+
+function MakeState:barrels(list)
+    table.insert(self.barrels, list)
+end
+
+function MakeState:item(item)
+    
+
 
 function MakeState:printqueue()
     for i=#self.queue,1,-1 do
@@ -107,13 +117,18 @@ function MakeState:phase1()
         local found = 0
         local barrels = {}
         for _, item in ipairs(elem) do
+            if self.state:item(item) then
             if env.seen[item] then
                 found = found + 1
+                env.items[item]['mul'] = env.items[item]['mul'] + 1
             elseif item.index and item.pos then
                 found = found + 1
+                env.items[item] = {mul=1}
                 table.insert(barrels, item)
                 dprintf('Barrel found for %s at (%d, %d).',
                     item.name, item.index, item.pos)
+            else
+                env.items[item] = {mul=1}
             end
             env.seen[item] = true
         end
@@ -132,6 +147,7 @@ function MakeState:phase1()
     local env = {
         __efunc = efunc,
         barrels = self.barrels,
+        items   = self.items,
         queue   = self.queue,
         seen    = {},
     }
@@ -141,6 +157,63 @@ function MakeState:phase1()
     end)
 end
 
+-- MakeNode tracks the making of one recipe of an item
+MakeNode = {}
+function MakeNode:new(state, item, rcpidx, count)
+    ms = {
+        state=state,
+        output=item,  -- what to make
+        count=count,  -- how many to make
+        items={},     -- map of barrel item -> {multiplier, count}
+        queue={},     -- make queue, created bf from dep tree
+    }
+    ms.idx = rcpidx
+    ms.rcp = item.recipes[rcpidx]
+    setmetatable(ms, self)
+    self.__index = self
+    return ms
+end
+
+function MakeNode:phase1()
+    -- phase 1 of make. Do a breadth-first scan of dep tree stopping at
+    -- elements where all deps are in barrels. While walking:
+    --   - fill in self.barrels index, pos
+    --   - add elems that are entirely not in barrels to self.queue
+    
+    -- We do this at the element level because the list of items in 
+    -- elem are a logical OR for the recipe, we only need to make one.
+    for _, elem in self.rcp.inputs:items() do
+        local barrels = {}
+        for _, item in ipairs(elem) do
+            if item.index and item.pos then
+                table.insert(barrels, item)
+                dprintf('Barrel found for %s at (%d, %d).',
+                    item.name, item.index, item.pos)
+            end
+            self.items[item] = {mul = 1}
+        end
+        if #barrels > 0 then
+            table.sort(barrels, function(a, b)
+                return a.index < b.index or a.index == b.index and a.pos < b.pos
+            end)
+            self.state:barrels(barrels)
+        elseif #barrels == 0 then
+            table.insert(self.queue, elem)
+            dprintf('Queue insert: [%s]', elemstr(elem))
+        end
+    end
+end
+
+--[[
+function MakeState:phase2()
+    -- In which we check the contents of the barrels to ensure we have enough
+    -- and add recipe deps to the queue when we don't.
+    for _, elem in self.barrels do
+        for _, item in elem do
+            -- Assume no need to check existence of tools every time.
+            if item.istool then break end
+            local count = self.d:checkInBarrel(item)
+--]]
 ---[[
 require 'items'
 require 'recipes'
@@ -154,6 +227,9 @@ for _, item in pairs(items) do
     ms:printbarrels()
     printf('Queue for %s:', item.name)
     ms:printqueue()
+    for i, data in pairs(ms.items) do
+        printf('%s: %d', i.name, data.mul)
+    end
 end
 --]]
 

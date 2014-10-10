@@ -10,6 +10,15 @@ if unpack and not table.unpack then
     table.unpack = unpack
 end
 
+function printf(fmt, ...)
+    print(string.format(fmt, ...))
+end
+
+DEBUG = true
+function dprintf(fmt, ...)
+    if DEBUG then printf(fmt, ...) end
+end
+
 -- loadAPI requires that stuff we want to load is global, then
 -- namespaces it for us. This is inconvenient for code that is
 -- used both inside and outside of computercraft.

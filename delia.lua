@@ -1,10 +1,24 @@
 local kNone = 'None'
 
+if turtle then
+    os.loadAPI('lib/make')
+    MakeState = make.MakeState
+end
+
+local function printf(fmt, ...)
+    print(string.format(fmt, ...))
+end
+
+DEBUG = true
+local function dprintf(fmt, ...)
+    if DEBUG then printf(fmt, ...) end
+end
+
 local specialLocs = {
     home = {0, 0}, -- home spot, fuel below.
     out  = {0, 2}, -- output chest to the right of turtle
     temp = {0, 3}, -- intermediate storage
-    fin  = {0, 4}, -- chest that feeds items into a furnace
+    fin  = {0, 7}, -- chest that feeds items into a furnace
     fout = {0, 6}, -- chest where items fed into the furnace appear
 }
 
@@ -266,10 +280,10 @@ function Delia:fetch(name, n)
     end
 end
 
-function Delia:craft(out, n)
+function Delia:craft(n, index, pos)
     -- We have to call turtle.craft() in a loop when using harvestcraft
     -- tools, because it will only craft one output at a time :-(
-    self:move(out)
+    self:move(index, pos)
     turtle.select(16)
     for i=1,n do
         if not turtle.craft() then
@@ -307,23 +321,19 @@ function Delia:make(name, n)
         printf('No recipes for %s', name)
         return
     end
-    self:makeinternal(item, n)
-end
-
-function Delia:makeinternal(item, n)
     dprintf('Making %d of %s (%s)', n, item.name, item.id)
-    local items, missing
-    for _, rcp in ipairs(item.pruned) do
-        items, missing = self:checkIngredients(rcp, n)
-        if items and not missing then
-            self:makesimple(items, n)
-            return true
-        end
+    local ms = MakeState:new(item, n)
+    if not ms:phase1(self) then
+        printf('Cannot make %s', item.name)
+        self:move('home')
+        return
     end
-    self:makedeps(item, n)
+    ms:phase2(self)
+    self:move('home')
 end
 
-function Delia:makesimple(items, n)
+function Delia:makeSimple(items, n, index, pos)
+    if not index then index = 'out' end
     -- all of these items are known to be in barrels
     local tools = {}
     local ok = true
@@ -343,7 +353,7 @@ function Delia:makesimple(items, n)
             return
         end
     end
-    if not self:craft('out', n) then
+    if not self:craft(n, index, pos) then
         self:empty('Simple make failed while crafting.')
         return
     end
@@ -360,36 +370,6 @@ function Delia:makesimple(items, n)
     self:empty()
 end
 
-function Delia:makedeps(item, n)
-    print('Not ready yet.')
-end
-
-function Delia:checkIngredients(recipe, n)
-    local items, missing = {}, {}
-    for i, elem in recipe.pruned:items() do
-        if elem and elem ~= kNone then
-            local foundelem = false
-            for _, item in ipairs(elem) do
-                local want = n
-                if item.istool then
-                    want = 1
-                end
-                local got = self:checkInBarrel(item)
-                if got and got > want then
-                    items[i] = item
-                    foundelem = true
-                    dprintf('We have %d of %s.', want, item.name)
-                    break
-                end
-            end
-            if not foundelem then
-                missing[i] = elem
-            end
-        end
-    end
-    return items, missing
-end
-
 function Delia:checkInBarrel(item)
     if not (item.index and item.pos) then return end
     if not self:move(item.index, item.pos) then return end
@@ -398,4 +378,5 @@ function Delia:checkInBarrel(item)
         self:put()
         return num
     end
+    return 0
 end

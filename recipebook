@@ -4248,6 +4248,8 @@ items = ItemSet:new {
     id = "15383:0",
     name = "Butter",
     class = "item.PamHarvestCraft:butterItem",
+    index = 3,
+    pos = 7,
     recipes = {
       Recipe:new {
         type = "shapelessore",
@@ -5261,6 +5263,8 @@ items = ItemSet:new {
     id = "15414:0",
     name = "Cheese",
     class = "item.PamHarvestCraft:cheeseItem",
+    index = 3,
+    pos = 6,
     recipes = {
       Recipe:new {
         type = "shapelessore",
@@ -8475,6 +8479,8 @@ items = ItemSet:new {
     id = "15487:0",
     name = "Dough",
     class = "item.PamHarvestCraft:doughItem",
+    index = 2,
+    pos = 2,
     recipes = {
       Recipe:new {
         type = "shapelessore",
@@ -9469,6 +9475,8 @@ items = ItemSet:new {
     id = "15504:0",
     name = "Flour",
     class = "item.PamHarvestCraft:flourItem",
+    index = 2,
+    pos = 3,
     recipes = {
       Recipe:new {
         type = "shapelessore",
@@ -19465,6 +19473,8 @@ items = ItemSet:new {
     id = "15742:0",
     name = "Salt",
     class = "item.PamHarvestCraft:saltItem",
+    index = 2,
+    pos = 7,
     recipes = {
       Recipe:new {
         type = "shapelessore",

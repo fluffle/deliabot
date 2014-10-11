@@ -35,6 +35,13 @@ function Item:clearrecipes()
     self.recipes = {}
 end
 
+function Item:cost()
+    -- The make "cost" of an item in a barrel is:
+    if self.index and self.pos then
+        return self.index * 2 + math.ceil(self.pos/2)
+    end
+end
+
 function Item:makeable()
     if #self.recipes == 0 then return false end
     if self._makeable ~= nil then

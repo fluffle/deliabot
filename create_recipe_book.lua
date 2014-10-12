@@ -48,6 +48,11 @@ local function ignore(line)
     if line:match('!%((@crop%w+,1)%)%(%1%)%->') then
         return true
     end
+    -- The "replacement" stock recipes don't appear to have overwritten
+    -- the old ones that don't require water completely, so skip them.
+    if line:match('->%(15777:0,3%)$') then
+        return true
+    end
     -- We are not going to use the Mutandis recipes to create meats from other
     -- meats, especially because they introduce graph cycles.
     badinputs = {

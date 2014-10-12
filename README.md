@@ -41,10 +41,10 @@ the items must be stored in barrels. Delia requires a very particular barrel
 structure, a 4x4 cylinder of barrels with a set of chests and a furnace at one
 end, with the turtle placed above a fuel barrel at one end. Some screenshots:
 
-https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12\_20.52.22.png
-https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12\_20.52.35.png
-https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12\_20.52.54.png
-https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12\_20.53.32.png
+    https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.52.22.png
+    https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.52.35.png
+    https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.52.54.png
+    https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.53.32.png
 
 Each ring in the cylinder provides 8 barrels for storage. I recommend placing
 the 8 harvestcraft tools in the closest ring to the turtle, and also running

@@ -17,6 +17,10 @@ if tonumber(args[1]) then
     table.remove(args, 1)
 end
 local name = table.concat(args, ' ')
+if name:lower() == 'me a sandwich' then
+    print('What? Make it yourself!')
+    return
+end
 
 local d = delia.Delia:new(recipebook.recipes, recipebook.len)
 if turtle.getFuelLevel() < 1000 and not d:refuel() then

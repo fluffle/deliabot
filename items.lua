@@ -183,4 +183,4 @@ end
 -- recipe inputs and items.
 function ItemSet:resolve()
     for _, item in pairs(self) do item:resolve(self) end
-end 
+end

@@ -57,12 +57,12 @@ function Shaped:fromline(line, itemset, oredict)
     inputs.height = tonumber(h)
     for i=1,(inputs.width*inputs.height) do
         local _, e, id = line:find('%(([^%)]+)%)', s)
-        if not id then 
+        if not id then
             print("Shaped recipe does not have enough elements to fulfill width*height")
             print(line)
             return
         end
-        if id == kNone then 
+        if id == kNone then
             inputs[i] = kNone
         else
             _, _, id = id:find('([^,]+),%d+')
@@ -107,7 +107,7 @@ end
 -- A Recipe has the following fields:
 --   - type (string): "shaped", "shapeless", "shapedore", "shapelessore", "furnace"
 --   - inputs (Shaped|Shapeless): Object describing recipe inputs.
---     each array is another array because we do oredict resolution and 
+--     each array is another array because we do oredict resolution and
 --     life is much easier when things are consistent.
 --   - output (Item): ID:DMG of the recipe output
 --   - outcount (int): number of items recipe produces
@@ -197,7 +197,7 @@ function Recipe:makeable()
     end
     return self._makeable
 end
-                    
+
 function Recipe:serialize(s)
     -- We flatten the graph for serialization here by writing item IDs
     -- instead of serialized items for recipe inputs and outputs.

@@ -28,7 +28,7 @@ local specialLocs = {
 --       2  6
 --        15
 -- loc
---  0: pos = 0: facing forward above ring barrel 1  CW 
+--  0: pos = 0: facing forward above ring barrel 1  CW
 --  1: pos = 1,2: facing LEFT  above ring barrel 1   |
 --  2: pos = 3,4: facing LEFT  below ring barrel 4  \/ /\
 --  4: pos = 7,8: facing RIGHT below ring barrel 8     |
@@ -94,7 +94,7 @@ local nav = {
 -- Turtles will only craft using the upper-left 3x3, ffs.
 local slots = {1,2,3,5,6,7,9,10,11}
 
--- Delia provides apis for navigating ringsets 
+-- Delia provides apis for navigating ringsets
 Delia = {}
 function Delia:new(is, len)
     if not is then return end
@@ -161,7 +161,7 @@ function Delia:index(index)
     if count < 0 then
         count, move, dir = -count, turtle.back, -1
     end
-    
+
     local ok = true
     for i=1,count do
 --        dprintf('Moving from index %d -> %d.',
@@ -272,11 +272,11 @@ function Delia:fetch(name, n)
     local item = self:lookup(name)
     if item and item.index and item.pos then
         if not self:get(item.index, item.pos, n) then
-            printf('Failed to get %s', item.name)
+            printf('Failed to get %s.', item.name)
             self:move('home')
         end
     else
-        printf('No barrel for %s', name)
+        printf('No barrel for %s.', name)
     end
 end
 
@@ -298,7 +298,7 @@ end
 function Delia:empty(errstr, ...)
     if errstr then
         printf(errstr, ...)
-        print('Please empty output chest and reset me :-(')
+        print('Please empty all chests and reset me :-(')
     end
     self:move('out')
     for i=1,16 do
@@ -318,18 +318,22 @@ function Delia:make(name, n)
         printf('Unknown or unmakeable item: %s', name)
         return
     elseif #item.pruned == 0 then
-        printf('No recipes for %s', name)
+        printf('No recipes for %s.', name)
         return
     end
     dprintf('Making %d of %s (%s)', n, item.name, item.id)
     local ms = MakeState:new(item, n)
     if not ms:phase1(self) then
-        printf('Cannot make %s', item.name)
+        printf('Cannot make %s.', item.name)
         self:move('home')
         return
     end
-    ms:phase2(self)
+    if not ms:phase2(self) then
+        self:empty('Making %s failed hard.', item.name)
+        return
+    end
     self:move('home')
+    return true
 end
 
 function Delia:shapeless(items, n, index, pos)

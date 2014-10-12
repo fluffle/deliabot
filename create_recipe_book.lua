@@ -15,10 +15,10 @@ allitems = ItemSet:fromfile('itemids')
 require 'oredict'
 oredict = OreDict:fromfile('oredict', allitems)
 
--- Prune some of the oredict entries, since we'll only ever use 
+-- Prune some of the oredict entries, since we'll only ever use
 -- Harvestcraft water/milk when crafting.
 oredict:replace('@listAllwater', allitems:item('15508:0'))
-oredict:replace('@listAllmilk', 
+oredict:replace('@listAllmilk',
     allitems:item('15507:0'), -- Fresh Milk
     allitems:item('15759:0')) -- Soy Milk
 
@@ -155,7 +155,7 @@ local function foodDependencies(item)
     end
     -- if stopitems:exists(item) then return end
     for _, rcp in ipairs(item.recipes) do
-        for _, elem in rcp.inputs:items() do 
+        for _, elem in rcp.inputs:items() do
             if elem and elem ~= kNone then
                 for _, it in ipairs(elem) do
                     if not deps:exists(it) then

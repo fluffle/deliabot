@@ -70,7 +70,7 @@ function MakeState:phase1(delia)
         -- a large number of barrels that have already been checked.
         table.sort(self.roots, byCost)
         local root = self.roots[1]
-        local itemlist = root:items() 
+        local itemlist = root:items()
         local tocheck = {}
         table.sort(itemlist, byPosition)
 
@@ -81,7 +81,7 @@ function MakeState:phase1(delia)
                 -- If we replaced an item but it's still in itemlist
                 -- another recipe is trying to use it (probably from
                 -- a *different* replacement) and we need to fix that
-                -- with another findNext(). TL;DR: this is probably Salt. 
+                -- with another findNext(). TL;DR: this is probably Salt.
                 self.items[item].replaced = false
             else
                 -- Only check items not previously checked.
@@ -89,7 +89,7 @@ function MakeState:phase1(delia)
                 tocheck[item] = true
             end
         end
-        
+
         for i=#itemlist,1,-1 do
             -- Add up multipliers for items by counting dupes,
             -- then dedupe and skip items already looked for.
@@ -99,7 +99,7 @@ function MakeState:phase1(delia)
                 if i ~= #itemlist and itemlist[i] == itemlist[i+1] then
                     table.remove(itemlist, i+1)
                 end
-            else 
+            else
                 table.remove(itemlist, i)
             end
         end
@@ -200,7 +200,7 @@ function MakeNode:buildTree()
             table.sort(barrels, byPosition)
             self.barrels[elem] = barrels
         else
-            -- We do this at the element level because the list of items in 
+            -- We do this at the element level because the list of items in
             -- elem are a logical OR for the recipe, we only need to make one
             -- of them, and we only need to make one of the recipes.
             dprintf('Queue insert: [%s]', elemstr(elem))
@@ -277,7 +277,7 @@ function MakeNode:findNext(item)
                     dprintf('Replacing %s with %s.', item.name, new.name)
                 elseif new ~= blist[1] then
                     dprintf('Wat, expected all nexts to be the same.')
-                    dprintf('%s != %s for %s', new, blist[1], self.rcp.output.name) 
+                    dprintf('%s != %s for %s', new, blist[1], self.rcp.output.name)
                 end
             else
                 table.insert(empty, elem)
@@ -396,15 +396,17 @@ function MakeNode:make(delia, n, intermediate)
         for _, dep in pairs(self.temp) do
             table.insert(items, dep)
         end
+        -- FFFFUUUU stock.
+        local count = math.ceil(n/self.rcp.outcount)
         if item.index and item.pos then
             -- Craft into item barrel if it exists.
-            ok = delia:shapeless(items, n, item.index, item.pos)
+            ok = delia:shapeless(items, count, item.index, item.pos)
         elseif intermediate then
             -- If this is an intermediate dep then craft into temp chest.
-            ok = delia:shapeless(items, n, 'temp')
+            ok = delia:shapeless(items, count, 'temp')
         else
             -- Otherwise craft into output chest.
-            ok =  delia:shapeless(items, n, 'out')
+            ok =  delia:shapeless(items, count, 'out')
         end
     end
     for _, dep in pairs(self.temp) do

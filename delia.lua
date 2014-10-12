@@ -1,17 +1,12 @@
-local kNone = 'None'
-
 if turtle then
+    os.loadAPI('lib/util')
+    printf = util.printf
+    dprintf = util.dprintf
     os.loadAPI('lib/make')
     MakeState = make.MakeState
-end
-
-local function printf(fmt, ...)
-    print(string.format(fmt, ...))
-end
-
-DEBUG = true
-local function dprintf(fmt, ...)
-    if DEBUG then printf(fmt, ...) end
+else
+    require 'util'
+    require 'make'
 end
 
 local specialLocs = {

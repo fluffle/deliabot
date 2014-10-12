@@ -1,12 +1,9 @@
-local kNone = 'None'
-
-local function printf(fmt, ...)
-    print(string.format(fmt, ...))
-end
-
-DEBUG = true
-local function dprintf(fmt, ...)
-    if DEBUG then printf(fmt, ...) end
+if turtle then
+    os.loadAPI('lib/util')
+    printf = util.printf
+    dprintf = util.dprintf
+else
+    require 'util'
 end
 
 local function elemstr(elem)

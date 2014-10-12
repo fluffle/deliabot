@@ -5,7 +5,7 @@
 -- https://github.com/vitzli/recipedumper/issues/1
 
 -- None is used in many places.
-kNone = 'None'
+require 'util'
 
 -- Load in the dumped list of items from a file.
 require 'items'

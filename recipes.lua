@@ -1,3 +1,10 @@
+if turtle then
+    os.loadAPI('lib/util')
+    kNone = util.kNone
+else
+    require 'util'
+end
+
 local function resolve(id, itemset, oredict)
     if id:sub(1,1) == '@' and oredict:items(id) then
         return oredict:items(id)

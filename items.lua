@@ -74,15 +74,21 @@ function Item:serialize(s)
         s:write('pos = %d,', self.pos)
     end
     if self.istool then s:write('istool = true,') end
-    for n, t in pairs({recipes = self.recipes, pruned = self.pruned}) do
-        if next(t) then
-            s:write('%s = {', n)
-            for _, rcp in ipairs(t) do
-                rcp:serialize(s)
-                s:write(',')
-            end
-            s:write('},')
+    if self.recipes and next(self.recipes) then
+        s:write('recipes = {')
+        for _, rcp in ipairs(self.recipes) do
+            rcp:serialize(s)
+            s:write(',')
         end
+        s:write('},')
+    end
+    if self.pruned and next(self.pruned) then
+        s:write('pruned = {')
+        for _, rcp in ipairs(self.pruned) do
+            rcp:serialize(s)
+            s:write(',')
+        end
+        s:write('},')
     end
     s:partial('}')
 end

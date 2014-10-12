@@ -22,7 +22,7 @@ This list is still too long for most people, I suspect.
 
 You'll need:
 
-  - A lua interpreter: `apt-get install` lua5.2 or possibly
+  - A lua interpreter: `apt-get install lua5.2` or possibly
     http://sourceforge.net/projects/luabinaries/files/5.2.3/Executables/lua-5.2.3\_Win64\_bin.zip/download
 
   - A python interpreter: `apt-get install python2.7` or possibly
@@ -41,10 +41,10 @@ the items must be stored in barrels. Delia requires a very particular barrel
 structure, a 4x4 cylinder of barrels with a set of chests and a furnace at one
 end, with the turtle placed above a fuel barrel at one end. Some screenshots:
 
-    https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.52.22.png
-    https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.52.35.png
-    https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.52.54.png
-    https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.53.32.png
+https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.52.22.png
+https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.52.35.png
+https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.52.54.png
+https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.53.32.png
 
 Each ring in the cylinder provides 8 barrels for storage. I recommend placing
 the 8 harvestcraft tools in the closest ring to the turtle, and also running
@@ -71,17 +71,17 @@ where your turtle's data dir is located once it is s done.
 You then need to create a folder `lib` inside that dir, and copy the following
 files from here to there:
 
-Source       | Destination
--------------|-------------
-debug*       | debug
-delia.lua    | lib/delia
-fetch        | fetch
-items.lua    | lib/items
-make         | make
-make.lua     | lib/make
-recipebook   | lib/recipebook
-recipes.lua  | lib/recipes
-util.lua     | lib/util
+Source         | Destination
+---------------|----------------
+`debug*`       | `debug`
+`delia.lua`    | `lib/delia`
+`fetch`        | `fetch`
+`items.lua`    | `lib/items`
+`make`         | `make`
+`make.lua`     | `lib/make`
+`recipebook`   | `lib/recipebook`
+`recipes.lua`  | `lib/recipes`
+`util.lua`     | `lib/util`
 
 \* debug is not particularly necessary
 

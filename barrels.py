@@ -3,6 +3,7 @@
 import collections
 import itertools
 import operator
+import os
 import sys
 
 from pymclevel import mclevel
@@ -155,7 +156,19 @@ class RingSet(object):
         return self._rings[index]['barrels'][pos]
 
 def main(args):
-    level = mclevel.fromFile(args[0] + '/level.dat')
+    if len(args) != 2:
+        print 'Usage: barrels.py <save folder> <output file>'
+        return 1
+    levelfile = os.path.join(args[0], 'level.dat')
+    if not os.path.exists(levelfile):
+        print 'Could not find level.dat at %s' % levelfile
+        return 2
+    output = open(args[1], 'w')
+    if not output:
+        print 'Could not open %s for writing' % args[1]
+        return 2
+
+    level = mclevel.fromFile(levelfile)
     byX = Axis(X)
     byZ = Axis(Z)
     # I tried using JABBA/dataN.dat but they are often out-of-date
@@ -178,13 +191,24 @@ def main(args):
                 byX.barrel(b)
                 byZ.barrel(b)
 
+    rings = []
     for ring in byX.findRings():
         if ring.validate(level):
-            print ring
+            rings.append(ring)
 
     for ring in byZ.findRings():
         if ring.validate(level):
-            print ring
+            rings.append(ring)
+
+    if len(rings) == 0:
+        print 'Found no ring sets.'
+        return 3
+    if len(rings) > 1:
+        print 'Found %d ring sets, only using first.' % len(rings)
+    output.write(str(rings[0]))
+    output.write('\n')
+    output.close()
+    return 0
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    sys.exit(main(sys.argv[1:]))

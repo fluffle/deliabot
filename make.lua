@@ -411,20 +411,3 @@ function MakeNode:make(delia, n, intermediate)
     end
     return ok
 end
-
---[[
-require 'items'
-require 'recipes'
-require 'recipebook'
-require 'serializer'
-items:resolve()
-
-for _, item in pairs(items) do
-    local ms = MakeState:new(nil, item)
-    ms:phase1()
-    local s = Serializer:new()
-    ms:serialize(s)
-    print(s)
-end
---]]
-

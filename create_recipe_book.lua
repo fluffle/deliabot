@@ -1,5 +1,15 @@
 #! /usr/bin/lua
 
+-- Check commandline arg.
+
+if #arg ~= 1 then
+    print('Usage: lua create_recipe_book.lua /path/to/save/folder')
+    os.exit(1)
+end
+
+fh = assert(io.open(arg[1] .. '/level.dat'))
+fh:close()
+
 -- We have input files in recipe dump format, but this is not amazingly
 -- helpful, especially when shapeless recipe handling is broken:
 -- https://github.com/vitzli/recipedumper/issues/1
@@ -125,9 +135,18 @@ function LoadBarrels(file, itemset)
     assert(index == tonumber(len), 'Not '..len..' rings in file.')
     turtle.x, turtle.y, turtle.z = tonumber(x), tonumber(y), tonumber(z)
     turtle.len = tonumber(len)
+    turtle.id = id
     return turtle
 end
-turtle = LoadBarrels('barrels_testing', allitems)
+tmpname = os.tmpname()
+ok, out, exit = os.execute('python barrels.py "'..arg[1]..'" "'..tmpname..'"')
+if not ok or exit ~= 0 then
+    print('Failed to execute barrels.py.')
+    print(out)
+    os.exit(1)
+end
+turtle = LoadBarrels(tmpname, allitems)
+os.remove(tmpname)
 
 stopitems = ItemSet:new():mergefrom(toolitems)
 stopitems:insert(allitems:item('15508:0')) -- Fresh Water
@@ -195,5 +214,7 @@ s:partial('recipes = ')
 makeable:serialize(s)
 s:write('')
 s:write('recipes:resolve()')
-print(s)
 
+fh = io.open('recipebook', 'w')
+fh:write(tostring(s))
+fh:close()

@@ -99,7 +99,7 @@ while the lower-left chest is where the finished product gets put. The
 upper-right chest feeds into the furnace, which then outputs into the
 lower-right chest.
 
-You can also use 'fetch' to fetch items from barrels to the output chest:
+You can also use `fetch` to fetch items from barrels to the output chest:
 
     fetch 16 salt
 

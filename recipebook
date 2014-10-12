@@ -1,4 +1,16 @@
-items = ItemSet:new {
+
+if turtle then
+    os.loadAPI('lib/items')
+    Item = items.Item
+    ItemSet = items.ItemSet
+    os.loadAPI('lib/recipes')
+    Shaped = recipes.Shaped
+    Shapeless = recipes.Shapeless
+    Recipe = recipes.Recipe
+end
+
+len = 10
+recipes = ItemSet:new {
   ["39:0"] = Item:new {
     id = "39:0",
     name = "Mushroom",
@@ -26171,4 +26183,4 @@ items = ItemSet:new {
     },
   },
 }
-len = 10
+recipes:resolve()

@@ -145,7 +145,7 @@ end
 function MakeState:phase2(delia)
     if not self.p1done or not self.roots or #self.roots == 0 then return end
     local root = self.roots[1]
-    root:make(delia, self.count)
+    return root:make(delia, self.count)
 end
 
 -- MakeNode tracks the making of one recipe of an item

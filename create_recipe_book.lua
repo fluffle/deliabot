@@ -19,11 +19,11 @@ require 'util'
 
 -- Load in the dumped list of items from a file.
 require 'items'
-allitems = ItemSet:fromfile('itemids')
+allitems = ItemSet:fromfile('data/itemids')
 
 -- Load in the ore dictionary, resolving IDs to Items.
 require 'oredict'
-oredict = OreDict:fromfile('oredict', allitems)
+oredict = OreDict:fromfile('data/oredict', allitems)
 
 -- Prune some of the oredict entries, since we'll only ever use
 -- Harvestcraft water/milk when crafting.
@@ -108,8 +108,8 @@ function LoadRecipes(file, itemset, oredict)
     end
     fh.close()
 end
-LoadRecipes('shapeless_ore_recipes', allitems, oredict)
-LoadRecipes('not_shapeless_ore_recipes', allitems, oredict)
+LoadRecipes('data/shapeless_ore_recipes', allitems, oredict)
+LoadRecipes('data/not_shapeless_ore_recipes', allitems, oredict)
 
 -- Load in the set of items we have available in our barrels.
 function LoadBarrels(file, itemset)

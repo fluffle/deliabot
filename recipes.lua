@@ -142,6 +142,10 @@ function Recipe:shaped()
     return self.type:sub(1,6) == 'shaped'
 end
 
+function Recipe:furnace()
+    return self.type == 'furnace'
+end
+
 function Recipe:makeable()
     if self._makeable ~= nil then
         -- We've done this lookup already. Yay caching.

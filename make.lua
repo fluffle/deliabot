@@ -71,63 +71,70 @@ function MakeState:phase1(delia)
         table.sort(self.roots, byCost)
         local root = self.roots[1]
         local itemlist = root:items() 
-        local itemdata = {}
+        local tocheck = {}
         table.sort(itemlist, byPosition)
 
         for _, item in ipairs(itemlist) do
-            if not self.items[item] then
+            if self.items[item] then
+                -- Reset multipliers on items we have seen.
+                self.items[item].mul = 0
+                -- If we replaced an item but it's still in itemlist
+                -- another recipe is trying to use it (probably from
+                -- a *different* replacement) and we need to fix that
+                -- with another findNext(). TL;DR: this is probably Salt. 
+                self.items[item].replaced = false
+            else
                 -- Only check items not previously checked.
-                itemdata[item] = { mul = 0 }
+                self.items[item] = { mul = 0 }
+                tocheck[item] = true
             end
         end
         
         for i=#itemlist,1,-1 do
             -- Add up multipliers for items by counting dupes,
             -- then dedupe and skip items already looked for.
-            if itemdata[itemlist[i]] then
-                itemdata[itemlist[i]].mul = itemdata[itemlist[i]].mul + 1
+            local item = itemlist[i]
+            self.items[item].mul = self.items[item].mul + 1
+            if tocheck[item] then
                 if i ~= #itemlist and itemlist[i] == itemlist[i+1] then
                     table.remove(itemlist, i+1)
                 end
-            else
+            else 
                 table.remove(itemlist, i)
             end
         end
-        if #itemlist == 0 then
-            printf('Post-filter itemlist is empty, bailing out.')
-            failed = true
-            break
-        end
 
         recalculate = false
-        local s, e, step = 1, #itemlist, 1
-        if reverse then
-            -- reverse flip-flops between true and false on each loop iteration
-            -- If true, we start from the end of itemlist and work backwards.
-            -- Itemlist is sorted by barrel position, so when reverse is false
-            -- the turtle works from low to high index, and when it is true
-            -- the turtle works from high to low. Switching between the two
-            -- should result in fewer moves and faster barrel checking.
-            s, e, step = #itemlist, 1, -1
-        end
-        for i=s,e,step do
-            local item = itemlist[i]
-            -- Check barrels (
-            local data = itemdata[item]
-            data.count = delia:checkInBarrel(item)
-            if data.count < self.count * data.mul then
---                printf('Need %d %s in (%d, %d), have %d.', self.count * data.mul,
---                    item.name, item.index, item.pos, data.count)
-                recalculate = true
-                if not root:findNext(item) then
-                    printf('Missing items for recipe: %s (%d, %d)',
-                        item.name, item.index, item.pos)
-                    failed = true
-                end
+        if #itemlist > 0 then
+            local s, e, step = 1, #itemlist, 1
+            if reverse then
+                -- reverse flip-flops between true and false on each loop iteration
+                -- If true, we start from the end of itemlist and work backwards.
+                -- Itemlist is sorted by barrel position, so when reverse is false
+                -- the turtle works from low to high index, and when it is true
+                -- the turtle works from high to low. Switching between the two
+                -- should result in fewer moves and faster barrel checking.
+                s, e, step = #itemlist, 1, -1
+            end
+            for i=s,e,step do
+                local item = itemlist[i]
+                -- Check barrels
+                self.items[item].count = delia:checkInBarrel(item)
             end
         end
-        for item, data in pairs(itemdata) do
-            self.items[item] = data
+        for item, data in pairs(self.items) do
+            if not data.replaced and data.count < self.count * data.mul then
+                dprintf('Need %d %s in (%d, %d), have %d.', self.count * data.mul,
+                    item.name, item.index, item.pos, data.count)
+                if not root:findNext(item) then
+                    printf('Missing %d %s for recipe.',
+                        self.count * data.mul - data.count, item.name)
+                    failed = true
+                end
+                recalculate = true
+                -- this item has been replaced with another (or a recipe)
+                data.replaced = true
+            end
         end
         reverse = not reverse
     end
@@ -148,6 +155,7 @@ function MakeNode:new(rcp)
         rcp=rcp,      -- what to make
         barrels={},   -- elems in barrels, map of elem -> sorted {Item}
         deps={},      -- deps of this recipe, map of elem -> {MakeNode}
+        temp={},      -- deps of this recipe in temp chests, map elem -> Item
     }
     setmetatable(ms, self)
     self.__index = self
@@ -229,6 +237,15 @@ function MakeNode:cost()
     return cost
 end
 
+function MakeNode:depth()
+    if not next(self.deps) then return 0 end
+    local depth = 0
+    for _, nlist in pairs(self.deps) do
+        depth = math.max(depth, nlist[1]:depth() + 1)
+    end
+    return depth
+end
+
 function MakeNode:items()
     local items = {}
     for _, blist in pairs(self.barrels) do
@@ -299,20 +316,102 @@ function MakeNode:findNext(item)
     return true
 end
 
-function MakeNode:make(delia, n)
-    if not next(self.deps) then
-        -- Simple case!
+function MakeNode:make(delia, n, intermediate)
+    local item = self.rcp.output
+    if self.rcp:shaped() then
+        printf('Shaped recipe for %s, failing.', item.name)
+        return false
+    end
+    if next(self.deps) then
+        local tomake = {}
+        for elem, _ in pairs(self.deps) do
+            table.insert(tomake, elem)
+        end
+        table.sort(tomake, function (a,b)
+            -- We need to make our dependencies deepest-first to
+            -- avoid (some) of the problems with using a temp chest.
+            -- Having a stable sort order is nice, sort by name too.
+            na = self.deps[a][1]
+            nb = self.deps[b][1]
+            return (na:depth() > nb:depth()
+                or na:depth() == nb:depth()
+                and na.rcp.output.name < nb.rcp.output.name)
+        end)
+        for _, elem in pairs(tomake) do
+            local node = self.deps[elem][1]
+            local dep = node.rcp.output
+            printf('%s depth %d', dep.name, node:depth())
+            if not node:make(delia, n, true) then return false end
+            self.deps[elem] = nil
+            if dep.index and dep.pos then
+                -- successfully crafted dep into barrel.
+                self.barrels[elem] = {dep}
+            elseif node.rcp:furnace() then
+                -- successfully crafted dep into furnace output chest.
+                -- NASTY HACK: temporarily set index for crafting.
+                dep.index = 'fout'
+                self.temp[elem] = dep
+            else
+                -- successfully crafted dep into temp chest.
+                -- NASTY HACK: temporarily set index for crafting.
+                dep.index = 'temp'
+                self.temp[elem] = dep
+            end
+        end
+    end
+    local ok = true
+    if next(self.deps) then
+        printf('Failed to clear deps while making %s.', item.name)
+        ok = false
+    elseif self.rcp:furnace() then
+        local items = {}
+        for _, elem in self.rcp.pruned:items() do
+            if self.barrels[elem] then
+                table.insert(items, self.barrels[elem][1])
+            elseif self.temp[elem] then
+                table.insert(items, self.temp[elem])
+            end
+        end
+        if #items ~= 1 then
+            printf('Very confused trying to furnace %d items.', #items)
+            return false
+        end
+        if item.index and item.pos then
+            -- Move cooked item to barrel after if it exists.
+            ok = delia:furnace(items[1], n, item.index, item.pos)
+        elseif not intermediate then
+            -- Making a final item, so move to output chest.
+            ok = delia:furnace(items[1], n, 'out')
+        else
+            -- Leave it in furnace output chest.
+            ok = delia:furnace(items[1], n)
+        end
+    else
+        -- Shapeless craft. Make ingredient list and go.
         local items = {}
         for _, blist in pairs(self.barrels) do
             table.insert(items, blist[1])
         end
         table.sort(items, byPosition)
-        delia:makeSimple(items, n)
-        return
+        for _, dep in pairs(self.temp) do
+            table.insert(items, dep)
+        end
+        if item.index and item.pos then
+            -- Craft into item barrel if it exists.
+            ok = delia:shapeless(items, n, item.index, item.pos)
+        elseif intermediate then
+            -- If this is an intermediate dep then craft into temp chest.
+            ok = delia:shapeless(items, n, 'temp')
+        else
+            -- Otherwise craft into output chest.
+            ok =  delia:shapeless(items, n, 'out')
+        end
     end
-    print('Still not implemented.')
+    for _, dep in pairs(self.temp) do
+        dep.index = nil
+    end
+    return ok
 end
-            
 
 --[[
 require 'items'

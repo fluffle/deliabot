@@ -298,7 +298,7 @@ end
 function Delia:empty(errstr, ...)
     if errstr then
         printf(errstr, ...)
-        print('Please empty chest and reset me :-(')
+        print('Please empty output chest and reset me :-(')
     end
     self:move('out')
     for i=1,16 do
@@ -332,7 +332,7 @@ function Delia:make(name, n)
     self:move('home')
 end
 
-function Delia:makeSimple(items, n, index, pos)
+function Delia:shapeless(items, n, index, pos)
     if not index then index = 'out' end
     -- all of these items are known to be in barrels
     local tools = {}
@@ -350,12 +350,12 @@ function Delia:makeSimple(items, n, index, pos)
         end
         if not ok then
             self:empty('Simple make failed at item %s.', item.name)
-            return
+            return false
         end
     end
     if not self:craft(n, index, pos) then
         self:empty('Simple make failed while crafting.')
-        return
+        return false
     end
     for i, item in pairs(tools) do
         dprintf('Returning %s from slot %d.', item.name, i)
@@ -364,10 +364,36 @@ function Delia:makeSimple(items, n, index, pos)
         ok = ok and self:put()
         if not ok then
             self:empty('Simple make failed while returning %s.', item.name)
-            return
+            return false
         end
     end
     self:empty()
+    return ok
+end
+
+function Delia:furnace(item, n, index, pos)
+    local ok = true
+    turtle.select(4)
+    ok = ok and self:move(item.index, item.pos)
+    ok = ok and self:pick(n)
+    ok = ok and self:move('fin')
+    ok = ok and self:put()
+    if not ok then
+        self:empty('Cooking %s failed on input.', item.name)
+        return false
+    end
+    dprintf('Waiting %d seconds for furnace.', 4*(n+1))
+    os.sleep(4*(n+1))
+    if index then
+        ok = ok and self:move('fout')
+        ok = ok and self:pick(n)
+        ok = ok and self:move(index, pos)
+        ok = ok and self:put()
+    end
+    if not ok then
+        self:empty('Cooking %s failed on output.', item.name)
+    end
+    return ok
 end
 
 function Delia:checkInBarrel(item)

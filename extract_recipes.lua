@@ -23,7 +23,7 @@ for line in fh:lines() do
         oreid2name[id] = name
     end
 end
-fh.close()
+fh:close()
 
 array2orename = {}
 fh = io.open('oredict_id_to_input_arraylist')
@@ -38,7 +38,7 @@ for line in fh:lines() do
         end
     end
 end
-fh.close()
+fh:close()
 
 -- this one is big because I just dumped all ItemStacks in the game...
 is2itemid = {}
@@ -50,7 +50,7 @@ for line in fh:lines() do
         is2itemid[is] = id
     end
 end
-fh.close()
+fh:close()
 
 -- now we can resolve the list of heap objects in the input arraylist to 
 -- either oredict names or item IDs.
@@ -94,8 +94,8 @@ for line in fh:lines() do
         out:write('->(', output, ')\n')
     end
 end
-fh.close()
-out.close()
+fh:close()
+out:close()
         
           
       

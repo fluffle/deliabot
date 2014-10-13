@@ -99,14 +99,14 @@ end
 function LoadRecipes(file, itemset, oredict)
     local fh = io.open(file, 'r')
     for line in fh:lines() do
-        if ignore(line) then goto continue end
-        local rcp = Recipe:fromline(line, itemset, oredict)
-        if rcp then
-            rcp.output:addrecipe(rcp)
+        if not ignore(line) then
+            local rcp = Recipe:fromline(line, itemset, oredict)
+            if rcp then
+                rcp.output:addrecipe(rcp)
+            end
         end
-        ::continue::
     end
-    fh.close()
+    fh:close()
 end
 LoadRecipes('data/shapeless_ore_recipes', allitems, oredict)
 LoadRecipes('data/not_shapeless_ore_recipes', allitems, oredict)
@@ -131,7 +131,7 @@ function LoadBarrels(file, itemset)
         end
         assert(pos == 8, 'Not 8 items in ring line:\n\t' .. line)
     end
-    fh.close()
+    fh:close()
     assert(index == tonumber(len), 'Not '..len..' rings in file.')
     turtle.x, turtle.y, turtle.z = tonumber(x), tonumber(y), tonumber(z)
     turtle.len = tonumber(len)

@@ -119,7 +119,7 @@ function ItemSet:fromfile(file)
             is[item.id] = item
         end
     end
-    fh.close()
+    fh:close()
     return is
 end
 

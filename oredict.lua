@@ -49,7 +49,7 @@ function OreDict:fromfile(file, itemset)
             dict:insert(name, resolve(ids, itemset))
         end
     end
-    fh.close()
+    fh:close()
     return dict
 end
 

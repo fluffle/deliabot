@@ -47,10 +47,15 @@ https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.52.5
 https://raw.githubusercontent.com/fluffle/deliabot/master/img/2014-10-12_20.53.32.png
 
 Each ring in the cylinder provides 8 barrels for storage. I recommend placing
-the 8 harvestcraft tools in the closest ring to the turtle, and also running
-itemducts along the 4 corners of the cylinder to allow items to be added to the
-barrels easily. A reasonable setup will need 6-10 rings of barrels in the
-cylinder to be able to create a wide range of food.
+the 8 harvestcraft tools in the closest ring to the turtle and having
+common items like water, milk, salt, wheat, dough, cheese, butter and stock 
+near the turtle too. Other than that, the turtle prefers closer items when
+crafting, so if you have items you don't want to get used except for specific
+things then place them further down the cylinder.
+
+You can run itemducts along the 4 corners of the cylinder to allow items to be
+added to the barrels easily. A reasonable setup will need 6-10 rings of barrels
+in the cylinder to be able to create a wide range of food.
 
 Once you have built this cylinder and put items in barrels, place the turtle
 and label it. Edit a script so that the data directory is created, then
@@ -66,7 +71,8 @@ item and recipe data, open up your level, locate the ring you have built and
 figure out what items are in which barrels. It will then figure out what
 HarvestCraft recipes it is possible to make from the set of items you have
 in barrels, and write out a recipe book to the local folder. It should tell you
-where your turtle's data dir is located once it is s done.
+where your turtle's data dir is located once it is done. Note: this can (and
+should) be re-run in the future if you change the ingredients in your barrels.
 
 You then need to create a folder `lib` inside that dir, and copy the following
 files from here to there:
@@ -102,6 +108,8 @@ lower-right chest.
 You can also use `fetch` to fetch items from barrels to the output chest:
 
     fetch 16 salt
+
+And `list` will print out the stuff that Delia can currently make.
 
 Things that won't work
 ======================

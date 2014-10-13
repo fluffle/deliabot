@@ -1,0 +1,11 @@
+if unpack and not table.unpack then
+    table.unpack = unpack
+end
+
+os.loadAPI('lib/recipebook')
+
+local names = {}
+for _, it in pairs(recipebook.recipes) do
+    table.insert(names, it.name)
+end
+textutils.pagedPrint(table.concat(names, '\n'))

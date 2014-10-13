@@ -18,18 +18,16 @@ exercise to the reader ;-)
 Dependencies
 ============
 
-This list is still too long for most people, I suspect.
+### Linux:
 
-You'll need:
+    sudo apt-get install lua5.2 python2.7 python-numpy python-yaml
 
-  - A lua interpreter: `apt-get install lua5.2` or possibly
-    http://sourceforge.net/projects/luabinaries/files/5.2.3/Executables/lua-5.2.3\_Win64\_bin.zip/download
+### Windows:
 
-  - A python interpreter: `apt-get install python2.7` or possibly
-    https://www.python.org/ftp/python/2.7.8/python-2.7.8.amd64.msi
-
-  - Python dependencies: pymclevel, numpy (`python-numpy`) and pyyaml
-    (`python-yaml`)
+Hopefully the EXEs provided will work. `create_recipe_book.exe` was created
+with [srlua](https://github.com/LuaDist/srlua) and Daniel Quintela's
+[precompiled windows version](http://www.soongsoft.com/lhf/lua/5.1/srlua.tgz).
+`barrels.exe` was created with [py2exe](http://www.py2exe.org/). 
 
 Setting up Delia
 ================
@@ -66,7 +64,8 @@ of this code and extract it somewhere, or `git clone` it from here. Grab the
 of pymclevel and put it in pymclevel, or run `git submodule update --init` to
 sync the submodule.
 
-Run `lua create_recipe_book.lua /path/to/save/folder`. This will read in the
+Run `lua create_recipe_book.lua /path/to/save/folder` (or, on Windows,
+`create_recipe_book.exe c:\path\to\save\folder`). This will read in the
 item and recipe data, open up your level, locate the ring you have built and
 figure out what items are in which barrels. It will then figure out what
 HarvestCraft recipes it is possible to make from the set of items you have

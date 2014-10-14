@@ -59,9 +59,10 @@ added to the barrels easily. A reasonable setup will need 6-10 rings of barrels
 in the cylinder to be able to create a wide range of food.
 
 Once you have built this cylinder and put items in barrels, place the turtle
-and label it. Edit a script so that the data directory is created, then
-save and exit the game. Grab the
-[latest .zip](https://github.com/fluffle/deliabot/archive/master.zip)
+and label it. Place a vanilla crafting table into it's inventory slot 1, then
+open up the lua console and type `turtle.equipLeft()` then `exit()`. Edit a
+script so that the data directory is created, then save and exit the game.
+Grab the [latest .zip](https://github.com/fluffle/deliabot/archive/master.zip)
 of this code and extract it somewhere, or `git clone` it from here.
 
 If you're running the Python/Lua directly then grab the

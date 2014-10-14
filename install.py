@@ -20,7 +20,8 @@ def main(args):
     if not os.path.exists(turtledir):
         os.mkdir(turtledir, 0755)
     libdir = os.path.join(turtledir, 'lib')
-    os.mkdir(libdir, 0755)
+    if not os.path.exists(libdir):
+        os.mkdir(libdir, 0755)
     for lib in LIBS:
         dest = os.path.join(libdir, os.path.splitext(lib)[0])
         print 'Copying %s -> %s' % (lib, dest)

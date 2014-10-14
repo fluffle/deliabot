@@ -6,6 +6,10 @@ os.loadAPI('lib/recipebook')
 
 local names = {}
 for _, it in pairs(recipebook.recipes) do
-    table.insert(names, it.name)
+    -- I assume people won't want to craft seeds from fruit/veg
+    if not it.name:match(' Seed$') then
+        table.insert(names, it.name)
+    end
 end
+table.sort(names)
 textutils.pagedPrint(table.concat(names, '\n'))

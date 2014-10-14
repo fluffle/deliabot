@@ -140,7 +140,7 @@ function LoadBarrels(file, itemset)
 end
 tmpname = os.tmpname()
 ok, out, exit = os.execute('python barrels.py "'..arg[1]..'" "'..tmpname..'"')
-if not ok or exit ~= 0 then
+if not ok then
     print('Failed to execute barrels.py.')
     print(out)
     os.exit(1)
@@ -218,4 +218,11 @@ s:write('recipes:resolve()')
 fh = io.open('recipebook', 'w')
 fh:write(tostring(s))
 fh:close()
-print('Done. Copy your files to '..arg[1]..'/computer/'..turtle.id)
+
+-- Lua's file handling API is ... poor. Shell out to python again.
+ok, out, exit = os.execute('python install.py "'..arg[1]..'" "'..turtle.id..'"')
+if not ok then
+    print('Failed to execute install.py.')
+    print(out)
+    os.exit(1)
+end
